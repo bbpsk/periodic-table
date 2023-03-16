@@ -12,6 +12,7 @@ const connection = initConnection();
 app.use(express.json());
 app.use(express.urlencoded({extened:  true}))
 app.use(cors());
+app.use('/', require('./routes'));
 
 log.setLevel(level);
 
