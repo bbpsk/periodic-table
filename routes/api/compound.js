@@ -4,7 +4,8 @@ const { getAllCompounds, addCompound, deleteCompound, getCompoundElements, getCo
 
 router.get('/', async (req, res) => {
     try {
-        const compounds = await getAllCompounds()
+        const {order, limit, search} = req.query;
+        const compounds = await getAllCompounds(order, limit, search);
         res.status(200).json(compounds);
     } catch (err) {
         res.status(err.status).json(err.message);

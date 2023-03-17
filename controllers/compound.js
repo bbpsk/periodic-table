@@ -1,6 +1,7 @@
 const log = require('loglevel');
 const Compound = require('../models/Compound');
 const { getElementsBySymbols } = require('./element');
+const { escapeRegExp } = require('../utils/helpers');
 
 const addCompound = async (compound) => {
     try {
@@ -18,7 +19,7 @@ const addCompound = async (compound) => {
 
 const deleteCompound = async (id) => {
     try {
-        const deleted = await Compound.deleteOne({id});
+        const deleted = await Compound.findByIdAndDelete(id);
         log.info(deleted);
         return {status: 200, message:`Compound successfully deleted`}
     } catch (err) {
@@ -27,14 +28,19 @@ const deleteCompound = async (id) => {
     }
 }
 
-const getAllCompounds = async (order='asc', limit=0) => {
+const getAllCompounds = async (order='asc', limit=0, search="") => {
     if(isNaN(parseInt(limit)) || limit < 0){
         log.error('invalid limit');
         throw {status: 400, message: 'invalid limit'}
     }
+    if(!(order === 'asc' || order === 'desc')){
+        log.error('invalid order');
+        throw {status: 400, message: 'invalid order'}
+    }
+    const escapedString = escapeRegExp(search);
     try {
         const compounds = await Compound
-        .find()
+        .find({ name: { $regex: escapedString,  $options: "i"} })
         .sort({molecularFormula: order})
         .limit(limit)
         return compounds;
@@ -53,7 +59,6 @@ const getCompoundsByFormula = async (formula) => {
             populate: {
               path: 'element',
               model: 'Element',
-              select: 'name atomicNumber'
             } 
          });
         if(compounds.length == 0) throw {status: 404, message: "could not find element"}
@@ -73,7 +78,6 @@ const getCompoundById = async (id) => {
             populate: {
               path: 'element',
               model: 'Element',
-              select: 'name atomicNumber'
             } 
          });
         if(!compound) throw {status: 404, message: "could not find element"}
