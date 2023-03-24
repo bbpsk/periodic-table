@@ -91,7 +91,7 @@ const updateCompound = async (id, compound) => {
         const updated = await Compound.findByIdAndUpdate(id, compound);
         log.debug(updated);
         if(!updated) throw {status: 404, message: "could not find compound"}
-        return {status: 201, message:`Compound successfully created`}
+        return {status: 200, message:`Compound successfully updated`}
 
     } catch(err) {
         handleError(err)

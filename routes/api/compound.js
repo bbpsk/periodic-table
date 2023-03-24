@@ -45,8 +45,9 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
     try {
         const id = req.params.id;
-        const compound = await updateCompound(id);
-        res.status(200).json(compound);
+        const compound = req.body;
+        const result = await updateCompound(id, compound);
+        res.status(200).json(result);
     }catch (err) {
         res.status(err.status).json(err.message);
     }
