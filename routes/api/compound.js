@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllCompounds, addCompound, deleteCompound, getCompoundElements, getCompoundById, getCompoundsByFormula } = require('../../controllers/compound');
+const { getAllCompounds, addCompound, deleteCompound, getCompoundById, getCompoundsByFormula, updateCompound } = require('../../controllers/compound');
 
 router.get('/', async (req, res) => {
     try {
@@ -36,6 +36,16 @@ router.get("/:id", async (req, res) => {
     try {
         const id = req.params.id;
         const compound = await getCompoundById(id);
+        res.status(200).json(compound);
+    }catch (err) {
+        res.status(err.status).json(err.message);
+    }
+});
+
+router.put("/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+        const compound = await updateCompound(id);
         res.status(200).json(compound);
     }catch (err) {
         res.status(err.status).json(err.message);

@@ -2,6 +2,7 @@ const log = require('loglevel');
 const Compound = require('../models/Compound');
 const { getElementsBySymbols } = require('./element');
 const { escapeRegExp } = require('../utils/helpers');
+const { handleError } = require('../utils/handleError');
 
 const addCompound = async (compound) => {
     try {
@@ -12,8 +13,7 @@ const addCompound = async (compound) => {
         await newComp.save();
         return {status: 201, message:`Compound successfully created`}
     } catch (err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
     }
 }
 
@@ -23,18 +23,15 @@ const deleteCompound = async (id) => {
         log.info(deleted);
         return {status: 200, message:`Compound successfully deleted`}
     } catch (err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
     }
 }
 
 const getAllCompounds = async (order='asc', limit=0, search="") => {
     if(isNaN(parseInt(limit)) || limit < 0){
-        log.error('invalid limit');
         throw {status: 400, message: 'invalid limit'}
     }
     if(!(order === 'asc' || order === 'desc')){
-        log.error('invalid order');
         throw {status: 400, message: 'invalid order'}
     }
     const escapedString = escapeRegExp(search);
@@ -45,8 +42,7 @@ const getAllCompounds = async (order='asc', limit=0, search="") => {
         .limit(limit)
         return compounds;
     } catch(err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
     }
 }
 
@@ -64,8 +60,7 @@ const getCompoundsByFormula = async (formula) => {
         if(compounds.length == 0) throw {status: 404, message: "could not find element"}
         return compounds;
     } catch(err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
     }
 }
 
@@ -80,11 +75,26 @@ const getCompoundById = async (id) => {
               model: 'Element',
             } 
          });
-        if(!compound) throw {status: 404, message: "could not find element"}
+        if(!compound) throw {status: 404, message: "could not find compound"}
         return compound;
     } catch(err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
+    }
+}
+
+const updateCompound = async (id, compound) => {
+    try{
+        if(compound.molecularFormula){
+            const compoundsElements = await getCompoundElements(compound.molecularFormula);
+            compound.elements = compoundsElements;
+        }
+        const updated = await Compound.findByIdAndUpdate(id, compound);
+        log.debug(updated);
+        if(!updated) throw {status: 404, message: "could not find compound"}
+        return {status: 201, message:`Compound successfully created`}
+
+    } catch(err) {
+        handleError(err)
     }
 }
 
@@ -97,15 +107,17 @@ const getCompoundElements = async (formula) => {
         const num = element.replace(/[^0-9]/g, "");
         const symbol = element.replace(/[0-9]/g, "");
         const elementId = databaseElements.find(element => element.symbol === symbol)?.id;
+        if(!elementId){
+            throw {status: 400, message: `could not find element with symbol ${symbol}`}
+        }
         return {count: num || '1', element: elementId};
        });
        return fullElements;
     } catch(err) {
-        log.error(err);
-        throw {status: 500, message: err.toString()};
+        handleError(err)
     }
 }
 
 module.exports = {
-    addCompound, deleteCompound, getAllCompounds, getCompoundById, getCompoundsByFormula
+    addCompound, deleteCompound, getAllCompounds, getCompoundById, getCompoundsByFormula, updateCompound
 }
